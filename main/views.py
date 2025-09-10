@@ -10,7 +10,7 @@ def show_main(request):
     context = {
         'npm' : '2406411830',
         'name': 'Haru Urara(RIP) (Jk it\'s Muhammad Fadhlurrohman Pasya)',
-        'class': 'PBP A',
+        'class': 'PBP E',
         'news_list': news_list
     }
 

@@ -51,15 +51,15 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware'
+    'django.contrib.messages.middleware.MessageMiddleware',    
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 ROOT_URLCONF = 'football_news.urls'
@@ -156,10 +156,25 @@ else:
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Add this section
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000", # For Django's own views
+    # Add the origin of your Flutter web app below.
+    # Find the port number from your VS Code or terminal when you run it.
+    "http://127.0.0.1:8000", # Example port, CHANGE THIS
+    "http://localhost:57897",
+    "http://localhost:54030"
+]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Set to False for production security. Only origins in CORS_ALLOWED_ORIGINS will be allowed.
+CORS_ALLOW_ALL_ORIGINS = False if PRODUCTION else True
 CORS_ALLOW_CREDENTIALS = True
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+
+##CORS_ALLOW_ALL_ORIGINS = True
+##CORS_ALLOW_CREDENTIALS = True
+##CSRF_COOKIE_SECURE = True
+##SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = PRODUCTION
+SESSION_COOKIE_SECURE = PRODUCTION
 CSRF_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SAMESITE = 'None'

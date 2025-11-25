@@ -139,18 +139,15 @@ def show_json_by_id(request, news_id):
        return HttpResponse(status=404)
 
 def login_user(request):
+    form = AuthenticationForm(request, data=request.POST or None)
     if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
-
         if form.is_valid():
             user = form.get_user()
-            login(request, user)
+            auth_login(request, user)
             response = HttpResponseRedirect(reverse("main:show_main"))
             response.set_cookie('last_login', str(datetime.datetime.now()))
             return response
-
-    else:
-      form = AuthenticationForm(request)
+    
     context = {'form': form}
     return render(request, 'login.html', context)
 
@@ -169,33 +166,33 @@ def logout(request):
             "status": False,
             "message": "Logout failed."
         }, status=401)
-
+    
 @csrf_exempt
-def login(request):
-    username = request.POST['username']
-    password = request.POST['password']
-    user = authenticate(username=username, password=password)
-    if user is not None:
-        if user.is_active:
-            auth_login(request, user)
-            # Login status successful.
-            return JsonResponse({
-                "username": user.username,
-                "status": True,
-                "message": "Login successful!"
-                # Add other data if you want to send data to Flutter.
-            }, status=200)
-        else:
-            return JsonResponse({
-                "status": False,
-                "message": "Login failed, account is disabled."
-            }, status=401)
+def login4flutter(request):
+    if request.method != 'POST':
+        return JsonResponse({"status": False, "message": "Invalid request method."}, status=405)
 
-    else:
+    try:
+        data = json.loads(request.body)
+        username = data.get('username')
+        password = data.get('password')
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({"status": False, "message": "Invalid JSON or missing fields."}, status=400)
+
+    user = authenticate(username=username, password=password)
+
+    if user is not None:
+        auth_login(request, user)
         return JsonResponse({
-            "status": False,
-            "message": "Login failed, please check your username or password."
-        }, status=401)
+            "status": True,
+            "message": "Login successful!",
+            "username": user.username
+        }, status=200)
+    
+    return JsonResponse({
+        "status": False,
+        "message": "Invalid username or password."
+    }, status=401)
 
 @csrf_exempt
 def register(request):
@@ -234,3 +231,25 @@ def register(request):
             "status": False,
             "message": "Invalid request method."
         }, status=400)
+
+@csrf_exempt
+def create_news_flutter(request):
+    if request.method == 'POST':
+        # Assumes the user is already logged in via a session from login4flutter
+        if not request.user.is_authenticated:
+            return JsonResponse({"status": False, "message": "Authentication required."}, status=401)
+
+        data = json.loads(request.body)
+        
+        new_news = News.objects.create(
+            user = request.user,
+            title = data["title"],
+            content = data["content"],
+            category = data["category"],
+            thumbnail = data.get("thumbnail", ""), # Use .get for optional fields
+            is_featured = data.get("is_featured", False)
+        )
+
+        return JsonResponse({"status": True, "message": "News created successfully!"}, status=201)
+    else:
+        return JsonResponse({"status": False, "message": "Invalid request method."}, status=400)
